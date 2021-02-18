@@ -1,6 +1,5 @@
 package com.flyeralarm.kafkamp
 
-
 import kotlin.test.assertEquals
 import kotlin.test.asserter
 

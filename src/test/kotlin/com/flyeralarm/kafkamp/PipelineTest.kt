@@ -322,7 +322,6 @@ class PipelineTest {
             mockk()
         }
 
-
         val pipeline = Pipeline(consumer, producer, false, false)
 
         assertThrows<RuntimeException>("Test message") {
