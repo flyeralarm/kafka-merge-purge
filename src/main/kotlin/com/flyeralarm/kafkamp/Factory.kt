@@ -1,6 +1,8 @@
 package com.flyeralarm.kafkamp
 
 import com.flyeralarm.kafkamp.commands.Ask
+import com.flyeralarm.kafkamp.commands.MergeAll
+import com.flyeralarm.kafkamp.commands.PurgeAll
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializer
 import org.apache.kafka.clients.CommonClientConfigs
@@ -111,6 +113,8 @@ class Factory(
                 return@setExecutionExceptionHandler 1
             }
             .addSubcommand(Ask::class.java)
+            .addSubcommand(MergeAll::class.java)
+            .addSubcommand(PurgeAll::class.java)
     }
 
     override fun <K : Any?> create(cls: Class<K>): K =
@@ -131,6 +135,8 @@ class Factory(
                     }
                     return@Ask Ask.Action.MERGE
                 } as K
+            MergeAll::class.java -> MergeAll(logger, pipeline) as K
+            PurgeAll::class.java -> PurgeAll(logger, pipeline) as K
             else -> fallbackFactory.create(cls)
         }
 
