@@ -18,8 +18,7 @@ class Ask(
 ) : Callable<Int> {
     @CommandLine.Option(
         names = ["-T", "--merge-tombstones"],
-        description = ["Merge tombstone records into destination topic as well"],
-        arity = "0..1"
+        description = ["Merge tombstone records into destination topic as well"]
     )
     var mergeTombstones = false
 

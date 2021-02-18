@@ -11,65 +11,107 @@ import java.nio.file.Path
     versionProvider = CLI.Companion::class,
     description = ["Merges Kafka records from one topic into another, marking them as deleted in the old topic in the process"],
     synopsisSubcommandLabel = "(ask | merge-all | purge-all | print)",
-    usageHelpAutoWidth = true
+    usageHelpAutoWidth = true,
+    sortOptions = false
 )
 class CLI {
     @CommandLine.Option(
-        names = ["-g", "--group"],
-        description = ["Consumer group for ingesting the source topic"],
-        required = true,
-        scope = CommandLine.ScopeType.INHERIT
-    )
-    lateinit var consumerGroup: String
-
-    @CommandLine.Option(
         names = ["-b", "--bootstrap-servers"],
-        description = ["Kafka Bootstrap servers as comma-delimited list. Takes precedence over properties files."],
-        scope = CommandLine.ScopeType.INHERIT
+        description = ["Kafka Bootstrap servers as comma-delimited list.", "Takes precedence over properties files."],
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 0
     )
     var bootstrapServers: String? = null
 
     @CommandLine.Option(
-        names = ["-P", "--properties"],
+        names = ["-g", "--group"],
+        description = ["Consumer group for ingesting the source topic"],
+        required = true,
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 1
+    )
+    lateinit var consumerGroup: String
+
+    @CommandLine.Option(
+        names = ["-O", "--properties"],
         description = ["A Java Properties file for shared client configuration (optional)"],
-        scope = CommandLine.ScopeType.INHERIT
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 2
     )
     var propertiesFilePath: Path? = null
 
     @CommandLine.Option(
-        names = ["--consumer-properties"],
-        description = ["A Java Properties file for consumer client configuration (optional)"],
-        scope = CommandLine.ScopeType.INHERIT
-    )
-    var consumerPropertiesFilePath: Path? = null
-
-    @CommandLine.Option(
-        names = ["--producer-properties"],
-        description = ["A Java Properties file for consumer client configuration (optional)"],
-        scope = CommandLine.ScopeType.INHERIT
-    )
-    var producerPropertiesFilePath: Path? = null
-
-    @CommandLine.Option(
-        names = ["-p", "--property"],
-        description = ["Specify a shared client configuration property directly, may be used multiple times. These options takes precedence over properties files."],
-        scope = CommandLine.ScopeType.INHERIT
+        names = ["-o", "--property"],
+        description = [
+            "Specify a shared client configuration property directly.",
+            "May be used multiple times.",
+            "These options takes precedence over properties files."
+        ],
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 3
     )
     var additionalProperties = mapOf<String, String>()
 
     @CommandLine.Option(
-        names = ["-cp", "--consumer-property"],
-        description = ["Specify a producer client configuration property directly, may be used multiple times. These options takes precedence over properties files."],
-        scope = CommandLine.ScopeType.INHERIT
+        names = ["-C", "--consumer-properties"],
+        description = ["A Java Properties file for consumer client configuration (optional)"],
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 4
+    )
+    var consumerPropertiesFilePath: Path? = null
+
+    @CommandLine.Option(
+        names = ["-c", "--consumer-property"],
+        description = [
+            "Specify a consumer client configuration property directly.",
+            "May be used multiple times.",
+            "These options takes precedence over properties files."
+        ],
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 5
     )
     var additionalConsumerProperties = mapOf<String, String>()
 
     @CommandLine.Option(
-        names = ["-pp", "--producer-property"],
-        description = ["Specify a producer client configuration property directly, may be used multiple times. These options takes precedence over properties files."],
-        scope = CommandLine.ScopeType.INHERIT
+        names = ["-P", "--producer-properties"],
+        description = ["A Java Properties file for consumer client configuration (optional)"],
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 6
+    )
+    var producerPropertiesFilePath: Path? = null
+
+    @CommandLine.Option(
+        names = ["-p", "--producer-property"],
+        description = [
+            "Specify a producer client configuration property directly.",
+            "May be used multiple times.",
+            "These options takes precedence over properties files."
+        ],
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 7
     )
     var additionalProducerProperties = mapOf<String, String>()
+
+    @CommandLine.Option(
+        names = ["-t", "--transaction"],
+        description = [
+            "Produce records within a transaction.",
+            "Optional value is the transactional ID to use.",
+            "Defaults to a random UUID"
+        ],
+        arity = "0..1",
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 8
+    )
+    var transactionalId: String? = null
+
+    @CommandLine.Option(
+        names = ["-n", "--no-commit"],
+        description = ["Do not commit consumer offsets"],
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 9
+    )
+    var noCommit = false
 
     @CommandLine.ArgGroup(
         exclusive = true,
@@ -84,26 +126,10 @@ class CLI {
     var valueSerializer = DefaultValueSerializer()
 
     @CommandLine.Option(
-        names = ["-t", "--transaction"],
-        description = ["Produce records within a transaction. Optional value is the transactional ID to use. Defaults to a random UUID"],
-        arity = "0..1",
-        scope = CommandLine.ScopeType.INHERIT
-    )
-    var transactionalId: String? = null
-
-    @CommandLine.Option(
-        names = ["-n", "--no-commit"],
-        description = ["Do not commit consumer offsets"],
-        arity = "0..1",
-        scope = CommandLine.ScopeType.INHERIT
-    )
-    var noCommit = false
-
-    @CommandLine.Option(
         names = ["-v", "--verbose"],
         description = ["Enable verbose logging"],
-        arity = "0..1",
-        scope = CommandLine.ScopeType.INHERIT
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 10
     )
     fun setVerbose(verbose: Boolean) {
         if (verbose) {
@@ -114,17 +140,15 @@ class CLI {
 
     class DefaultKeySerializer {
         @CommandLine.Option(
-            names = ["-AK", "--avro-key"],
+            names = ["-A", "--avro-key"],
             description = ["Force Avro (de)serializer for record keys"],
-            arity = "0..1",
             scope = CommandLine.ScopeType.INHERIT
         )
         var avro = false
 
         @CommandLine.Option(
-            names = ["-SK", "--string-key"],
+            names = ["-S", "--string-key"],
             description = ["Force String (de)serializer for record keys"],
-            arity = "0..1",
             scope = CommandLine.ScopeType.INHERIT
         )
         var string = false
@@ -132,17 +156,15 @@ class CLI {
 
     class DefaultValueSerializer {
         @CommandLine.Option(
-            names = ["-A", "--avro"],
+            names = ["-a", "--avro"],
             description = ["Force Avro (de)serializer for record values"],
-            arity = "0..1",
             scope = CommandLine.ScopeType.INHERIT
         )
         var avro = false
 
         @CommandLine.Option(
-            names = ["-S", "--string"],
+            names = ["-s", "--string"],
             description = ["Force String (de)serializer for record values"],
-            arity = "0..1",
             scope = CommandLine.ScopeType.INHERIT
         )
         var string = false

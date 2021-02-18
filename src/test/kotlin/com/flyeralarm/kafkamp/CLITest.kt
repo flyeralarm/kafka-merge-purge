@@ -142,8 +142,8 @@ class CLITest {
         CommandLine(options)
             .setErr(PrintWriter(out))
             .parseArgs(
-                "-p", "a=b",
-                "-p", "foo=bar",
+                "-o", "a=b",
+                "-o", "foo=bar",
                 "-g", "test"
             )
 
@@ -158,8 +158,8 @@ class CLITest {
         CommandLine(options)
             .setErr(PrintWriter(out))
             .parseArgs(
-                "-cp", "a=b",
-                "-cp", "foo=bar",
+                "-c", "a=b",
+                "-c", "foo=bar",
                 "-g", "test"
             )
 
@@ -174,8 +174,8 @@ class CLITest {
         CommandLine(options)
             .setErr(PrintWriter(out))
             .parseArgs(
-                "-pp", "a=b",
-                "-pp", "foo=bar",
+                "-p", "a=b",
+                "-p", "foo=bar",
                 "-g", "test"
             )
 
