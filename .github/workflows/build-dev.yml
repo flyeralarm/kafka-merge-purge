@@ -86,7 +86,9 @@ jobs:
         run: |
           rm -f ~/.gradle/caches/modules-2/modules-2.lock
           rm -f ~/.gradle/caches/modules-2/gc.properties
+      - name: Rename artifact
+        run: mv build/libs/kafka-merge-purge.jar "build/libs/kafka-merge-purge-${{ needs.metadata.outputs.version }}.jar"
       - uses: actions/upload-artifact@v2
         with:
           name: Application
-          path: build/libs/kafka-merge-purge.jar
+          path: build/libs/kafka-merge-purge-${{ needs.metadata.outputs.version }}.jar

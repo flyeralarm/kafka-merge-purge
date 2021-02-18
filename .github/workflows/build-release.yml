@@ -86,10 +86,12 @@ jobs:
         run: |
           rm -f ~/.gradle/caches/modules-2/modules-2.lock
           rm -f ~/.gradle/caches/modules-2/gc.properties
+      - name: Rename artifact
+        run: mv build/libs/kafka-merge-purge.jar "build/libs/kafka-merge-purge-${{ needs.metadata.outputs.version }}.jar"
       - uses: actions/upload-artifact@v2
         with:
-          name: Package
-          path: build/libs
+          name: Application
+          path: build/libs/kafka-merge-purge-${{ needs.metadata.outputs.version }}.jar
       # Changelog generator requires a package.json for legacy reasons
       - run: touch package.json
       - name: Changelog
@@ -114,6 +116,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/libs/kafka-merge-purge.jar
+          asset_path: ./build/libs/kafka-merge-purge-${{ needs.metadata.outputs.version }}.jar
           asset_name: kafka-merge-purge-${{ needs.metadata.outputs.version }}.jar
           asset_content_type: application/java-archive
