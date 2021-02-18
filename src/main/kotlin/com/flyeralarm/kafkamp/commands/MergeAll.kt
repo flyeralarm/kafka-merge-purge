@@ -1,6 +1,7 @@
 package com.flyeralarm.kafkamp.commands
 
 import com.flyeralarm.kafkamp.Pipeline
+import com.flyeralarm.kafkamp.prettyPrint
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.Logger
 import picocli.CommandLine
@@ -33,21 +34,19 @@ class MergeAll(private val logger: Logger, private val pipeline: Pipeline) : Cal
         var merged = 0
         try {
             pipeline.processTopic(sourceTopic) { record ->
-                val serialized = record.original
-
                 // Do not merge tombstone records unless specified
-                if (record.value == null && !mergeTombstones) {
-                    logger.debug("Skipping tombstone record at offset #${serialized.offset()} in topic '${serialized.topic()}' (Partition #${serialized.partition()})")
+                if (record.value() == null && !mergeTombstones) {
+                    logger.debug("Skipping tombstone record at offset #${record.offset()} in topic '${record.topic()}' (Partition #${record.partition()})")
                     return@processTopic
                 }
 
                 logger.debug(
-                    "Merging record at offset #${serialized.offset()} in topic '${serialized.topic()}' (Partition #${serialized.partition()}) into '$destinationTopic':\n" +
+                    "Merging record at offset #${record.offset()} in topic '${record.topic()}' (Partition #${record.partition()}) into '$destinationTopic':\n" +
                         record.prettyPrint("    ")
                 )
-                produce(ProducerRecord(destinationTopic, serialized.key(), serialized.value()))
+                produce(ProducerRecord(destinationTopic, record.key(), record.value()))
                 purge(record)
-                logger.info("Merged record with key ${record.key} at offset #${serialized.offset()} from source topic '${serialized.topic()}' (Partition #${serialized.partition()}) into '$destinationTopic'")
+                logger.info("Merged record with key ${record.key()} at offset #${record.offset()} from source topic '${record.topic()}' (Partition #${record.partition()}) into '$destinationTopic'")
                 merged += 1
             }
         } catch (exception: Exception) {

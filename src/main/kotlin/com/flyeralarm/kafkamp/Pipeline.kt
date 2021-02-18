@@ -12,9 +12,8 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 class Pipeline(
-    private val consumer: KafkaConsumer<ByteArray?, ByteArray?>,
-    private val producer: KafkaProducer<ByteArray?, ByteArray?>,
-    private val recordDeserializer: RecordDeserializer,
+    private val consumer: KafkaConsumer<MixedValue?, MixedValue?>,
+    private val producer: KafkaProducer<MixedValue?, MixedValue?>,
     private val transactions: Boolean,
     private val noCommit: Boolean
 ) {
@@ -28,7 +27,7 @@ class Pipeline(
 
     fun processTopic(
         topic: String,
-        consume: suspend Actions.(record: RecordDeserializer.Record) -> Unit
+        consume: suspend Actions.(record: Record) -> Unit
     ) {
         consumer.use {
             consumer.subscribe(listOf(topic))
@@ -44,10 +43,8 @@ class Pipeline(
                         val offsets = mutableMapOf<TopicPartition, OffsetAndMetadata>()
 
                         for (record in records) {
-                            val deserialized = recordDeserializer.deserialize(record)
-
                             runBlocking {
-                                actions.consume(deserialized)
+                                actions.consume(record)
                             }
 
                             offsets[TopicPartition(record.topic(), record.partition())] =
@@ -79,7 +76,7 @@ class Pipeline(
     }
 
     inner class Actions {
-        suspend fun produce(record: ProducerRecord<ByteArray?, ByteArray?>) {
+        suspend fun produce(record: ProducerRecord<MixedValue?, MixedValue?>) {
             suspendCoroutine<Unit> {
                 producer.send(record) { _, exception ->
                     if (exception != null) {
@@ -91,13 +88,13 @@ class Pipeline(
             }
         }
 
-        suspend fun purge(record: RecordDeserializer.Record) {
+        suspend fun purge(record: Record) {
             // Tombstone records are already marked for deletion, so do not purge them again
-            if (record.value == null) {
+            if (record.value() == null) {
                 return
             }
 
-            produce(ProducerRecord(record.original.topic(), record.original.partition(), record.original.key(), null))
+            produce(ProducerRecord(record.topic(), record.partition(), record.key(), null))
         }
     }
 }

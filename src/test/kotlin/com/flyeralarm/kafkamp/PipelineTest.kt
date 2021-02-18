@@ -1,6 +1,5 @@
 package com.flyeralarm.kafkamp
 
-import com.flyeralarm.kafkamp.RecordDeserializer.Record
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -9,7 +8,6 @@ import io.mockk.slot
 import io.mockk.verify
 import io.mockk.verifyOrder
 import org.apache.kafka.clients.consumer.ConsumerGroupMetadata
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.consumer.OffsetAndMetadata
@@ -24,20 +22,19 @@ import kotlin.test.assertEquals
 class PipelineTest {
     @Test
     fun `subscribes to specified topic and polls from consumer until no more records are returned, commits after every iteration`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>()
-        val recordDeserializer = mockk<RecordDeserializer>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>()
 
         every { consumer.subscribe(any<Collection<String>>()) } just runs
         every { consumer.commitSync() } just runs
         every { consumer.close() } just runs
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, byteArrayOf(), byteArrayOf())))),
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, byteArrayOf(), byteArrayOf())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
             ConsumerRecords(emptyMap())
         )
 
-        val pipeline = Pipeline(consumer, mockk(relaxed = true), recordDeserializer, false, false)
+        val pipeline = Pipeline(consumer, mockk(relaxed = true), false, false)
 
         pipeline.processTopic("test") {}
 
@@ -54,13 +51,12 @@ class PipelineTest {
 
     @Test
     fun `calls callback for every deserialized record sequentially`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
-        val recordDeserializer = mockk<RecordDeserializer>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
 
-        val record1 = ConsumerRecord<ByteArray?, ByteArray?>("test", 0, 0, byteArrayOf(), byteArrayOf())
-        val record2 = ConsumerRecord<ByteArray?, ByteArray?>("test", 0, 0, byteArrayOf(), byteArrayOf())
-        val record3 = ConsumerRecord<ByteArray?, ByteArray?>("test", 0, 0, byteArrayOf(), byteArrayOf())
+        val record1 = Record("test", 0, 0, mockk(), mockk())
+        val record2 = Record("test", 0, 0, mockk(), mockk())
+        val record3 = Record("test", 0, 0, mockk(), mockk())
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
             ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(record1, record2))),
@@ -68,43 +64,27 @@ class PipelineTest {
             ConsumerRecords(emptyMap())
         )
 
-        val deserializedRecord1 = Record(record1, mockk(), mockk())
-        val deserializedRecord2 = Record(record2, mockk(), mockk())
-        val deserializedRecord3 = Record(record3, mockk(), mockk())
-
-        every { recordDeserializer.deserialize(any()) } returnsMany listOf(
-            deserializedRecord1,
-            deserializedRecord2,
-            deserializedRecord3
-        )
-
-        val pipeline = Pipeline(consumer, producer, recordDeserializer, false, false)
+        val pipeline = Pipeline(consumer, producer, false, false)
 
         val usedRecords = mutableListOf<Record>()
         pipeline.processTopic("test") {
             usedRecords += it
         }
 
-        assertEquals(listOf(deserializedRecord1, deserializedRecord2, deserializedRecord3), usedRecords)
-
-        verifyOrder {
-            recordDeserializer.deserialize(record1)
-            recordDeserializer.deserialize(record2)
-            recordDeserializer.deserialize(record3)
-        }
+        assertEquals(listOf(record1, record2, record3), usedRecords)
     }
 
     @Test
     fun `flushes producer after every iteration if not transactional`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, byteArrayOf(), byteArrayOf())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
             ConsumerRecords(emptyMap())
         )
 
-        val pipeline = Pipeline(consumer, producer, mockk(relaxed = true), false, false)
+        val pipeline = Pipeline(consumer, producer, false, false)
 
         pipeline.processTopic("test") {}
 
@@ -116,15 +96,15 @@ class PipelineTest {
 
     @Test
     fun `uses producer transactions when specified`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, byteArrayOf(), byteArrayOf())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
             ConsumerRecords(emptyMap())
         )
 
-        val pipeline = Pipeline(consumer, producer, mockk(relaxed = true), true, false)
+        val pipeline = Pipeline(consumer, producer, true, false)
 
         pipeline.processTopic("test") {}
 
@@ -137,18 +117,18 @@ class PipelineTest {
 
     @Test
     fun `commits offsets with transaction if using transaction`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
         val consumerMetadata = mockk<ConsumerGroupMetadata>()
 
         every { consumer.groupMetadata() } returns consumerMetadata
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, byteArrayOf(), byteArrayOf())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
             ConsumerRecords(emptyMap())
         )
 
-        val pipeline = Pipeline(consumer, producer, mockk(relaxed = true), true, false)
+        val pipeline = Pipeline(consumer, producer, true, false)
 
         pipeline.processTopic("test") {}
 
@@ -162,15 +142,15 @@ class PipelineTest {
 
     @Test
     fun `skips commit if specified`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, byteArrayOf(), byteArrayOf())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
             ConsumerRecords(emptyMap())
         )
 
-        val pipeline = Pipeline(consumer, producer, mockk(relaxed = true), false, true)
+        val pipeline = Pipeline(consumer, producer, false, true)
 
         pipeline.processTopic("test") {}
 
@@ -187,15 +167,15 @@ class PipelineTest {
 
     @Test
     fun `excludes offsets from transaction if no commit requested`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, byteArrayOf(), byteArrayOf())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
             ConsumerRecords(emptyMap())
         )
 
-        val pipeline = Pipeline(consumer, producer, mockk(relaxed = true), true, true)
+        val pipeline = Pipeline(consumer, producer, true, true)
 
         pipeline.processTopic("test") {}
 
@@ -213,15 +193,15 @@ class PipelineTest {
 
     @Test
     fun `aborts transaction on exception and rethrows`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, byteArrayOf(), byteArrayOf())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
             ConsumerRecords(emptyMap())
         )
 
-        val pipeline = Pipeline(consumer, producer, mockk(relaxed = true), true, false)
+        val pipeline = Pipeline(consumer, producer, true, false)
 
         assertThrows<RuntimeException>("Blargh") {
             pipeline.processTopic("test") {
@@ -238,11 +218,11 @@ class PipelineTest {
 
     @Test
     fun `can send record through callback arguments`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, byteArrayOf(), byteArrayOf())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
             ConsumerRecords(emptyMap())
         )
 
@@ -256,9 +236,9 @@ class PipelineTest {
             mockk()
         }
 
-        val record = ProducerRecord<ByteArray?, ByteArray?>("test", null, null)
+        val record = ProducerRecord<MixedValue?, MixedValue?>("test", null, null)
 
-        val pipeline = Pipeline(consumer, producer, mockk(relaxed = true), false, false)
+        val pipeline = Pipeline(consumer, producer, false, false)
 
         pipeline.processTopic("test") {
             produce(record)
@@ -271,17 +251,15 @@ class PipelineTest {
 
     @Test
     fun `purging record writes tombstone record`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
 
-        val key = byteArrayOf(42)
-        val originalRecord = ConsumerRecord("test", 42, 0, key, byteArrayOf())
-        val recordDeserializer = mockk<RecordDeserializer>(relaxed = true)
-
-        every { recordDeserializer.deserialize(any()) } returns Record(originalRecord, "key", "value")
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("test", 42, 0, key, value)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(originalRecord))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(record))),
             ConsumerRecords(emptyMap())
         )
 
@@ -295,7 +273,7 @@ class PipelineTest {
             mockk()
         }
 
-        val pipeline = Pipeline(consumer, producer, recordDeserializer, false, false)
+        val pipeline = Pipeline(consumer, producer, false, false)
 
         pipeline.processTopic("test") {
             purge(it)
@@ -308,19 +286,18 @@ class PipelineTest {
 
     @Test
     fun `does not write anything when trying to purge tombstone record`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
-        val recordDeserializer = mockk<RecordDeserializer>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
             ConsumerRecords(
                 mapOf(
                     TopicPartition("test", 0) to listOf(
-                        ConsumerRecord(
+                        Record(
                             "test",
                             42,
                             0,
-                            byteArrayOf(42),
+                            MixedValue(byteArrayOf(42), "key"),
                             null
                         )
                     )
@@ -329,9 +306,7 @@ class PipelineTest {
             ConsumerRecords(emptyMap())
         )
 
-        every { recordDeserializer.deserialize(any()) } returns Record(mockk(), null, null)
-
-        val pipeline = Pipeline(consumer, producer, recordDeserializer, false, false)
+        val pipeline = Pipeline(consumer, producer, false, false)
 
         pipeline.processTopic("test") {
             purge(it)
@@ -344,11 +319,11 @@ class PipelineTest {
 
     @Test
     fun `handles exception in producer sending`() {
-        val consumer = mockk<KafkaConsumer<ByteArray?, ByteArray?>>(relaxed = true)
-        val producer = mockk<KafkaProducer<ByteArray?, ByteArray?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
+        val producer = mockk<KafkaProducer<MixedValue?, MixedValue?>>(relaxed = true)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, byteArrayOf(), byteArrayOf())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, null, null)))),
             ConsumerRecords(emptyMap())
         )
 
@@ -362,7 +337,7 @@ class PipelineTest {
             mockk()
         }
 
-        val pipeline = Pipeline(consumer, producer, mockk(relaxed = true), false, false)
+        val pipeline = Pipeline(consumer, producer, false, false)
 
         assertThrows<RuntimeException>("Test message") {
             pipeline.processTopic("test") {

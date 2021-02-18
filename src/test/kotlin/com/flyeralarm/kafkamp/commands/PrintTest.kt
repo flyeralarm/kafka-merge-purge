@@ -1,12 +1,13 @@
 package com.flyeralarm.kafkamp.commands
 
+import com.flyeralarm.kafkamp.MixedValue
+import com.flyeralarm.kafkamp.Record
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
 import io.mockk.verifyOrder
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
@@ -18,15 +19,15 @@ import kotlin.test.assertEquals
 class PrintTest {
     @Test
     fun `subscribes to consumer and polls until no more records are found`() {
-        val consumer = mockk<KafkaConsumer<Any?, Any?>>()
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>()
 
         every { consumer.subscribe(any<Collection<String>>()) } just runs
         every { consumer.commitSync() } just runs
         every { consumer.close() } just runs
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, mockk(), mockk())))),
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, mockk(), mockk())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
             ConsumerRecords(emptyMap())
         )
 
@@ -49,15 +50,15 @@ class PrintTest {
 
     @Test
     fun `does not commit offsets if requested`() {
-        val consumer = mockk<KafkaConsumer<Any?, Any?>>()
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>()
 
         every { consumer.subscribe(any<Collection<String>>()) } just runs
         every { consumer.commitSync() } just runs
         every { consumer.close() } just runs
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, mockk(), mockk())))),
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, mockk(), mockk())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
+            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(Record("test", 0, 0, mockk(), mockk())))),
             ConsumerRecords(emptyMap())
         )
 
@@ -77,11 +78,33 @@ class PrintTest {
 
     @Test
     fun `logs pretty-printed records`() {
-        val consumer = mockk<KafkaConsumer<Any?, Any?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, "KEY1", "VALUE1")))),
-            ConsumerRecords(mapOf(TopicPartition("test", 1) to listOf(ConsumerRecord("test", 1, 1, "KEY2", "VALUE2")))),
+            ConsumerRecords(
+                mapOf(
+                    TopicPartition("test", 0) to listOf(
+                        Record(
+                            "test",
+                            0,
+                            0,
+                            MixedValue(byteArrayOf(), "KEY1"),
+                            MixedValue(byteArrayOf(), "VALUE1")
+                        )
+                    )
+                )
+            ),
+            ConsumerRecords(
+                mapOf(
+                    TopicPartition("test", 1) to listOf(
+                        Record(
+                            "test", 1, 1,
+                            MixedValue(byteArrayOf(), "KEY2"),
+                            MixedValue(byteArrayOf(), "VALUE2")
+                        )
+                    )
+                )
+            ),
             ConsumerRecords(emptyMap())
         )
 
@@ -116,12 +139,48 @@ class PrintTest {
 
     @Test
     fun `logs number of successfully printed records`() {
-        val consumer = mockk<KafkaConsumer<Any?, Any?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
 
         every { consumer.poll(any<Duration>()) } returnsMany listOf(
-            ConsumerRecords(mapOf(TopicPartition("test", 0) to listOf(ConsumerRecord("test", 0, 0, "KEY1", "VALUE1")))),
-            ConsumerRecords(mapOf(TopicPartition("test", 1) to listOf(ConsumerRecord("test", 1, 1, "KEY2", "VALUE2")))),
-            ConsumerRecords(mapOf(TopicPartition("test", 1) to listOf(ConsumerRecord("test", 1, 1, "KEY2", "VALUE2")))),
+            ConsumerRecords(
+                mapOf(
+                    TopicPartition("test", 0) to listOf(
+                        Record(
+                            "test",
+                            0,
+                            0,
+                            MixedValue(byteArrayOf(), "KEY1"),
+                            MixedValue(byteArrayOf(), "VALUE1")
+                        )
+                    )
+                )
+            ),
+            ConsumerRecords(
+                mapOf(
+                    TopicPartition("test", 1) to listOf(
+                        Record(
+                            "test",
+                            1,
+                            1,
+                            MixedValue(byteArrayOf(), "KEY2"),
+                            MixedValue(byteArrayOf(), "VALUE2")
+                        )
+                    )
+                )
+            ),
+            ConsumerRecords(
+                mapOf(
+                    TopicPartition("test", 1) to listOf(
+                        Record(
+                            "test",
+                            1,
+                            1,
+                            MixedValue(byteArrayOf(), "KEY2"),
+                            MixedValue(byteArrayOf(), "VALUE2")
+                        )
+                    )
+                )
+            ),
             ConsumerRecords(emptyMap())
         )
 
@@ -139,18 +198,18 @@ class PrintTest {
 
     @Test
     fun `exits with code 1 if consumers throws exception and logs total printed`() {
-        val consumer = mockk<KafkaConsumer<Any?, Any?>>(relaxed = true)
+        val consumer = mockk<KafkaConsumer<MixedValue?, MixedValue?>>(relaxed = true)
         val exception = RuntimeException("Test")
 
         every { consumer.poll(any<Duration>()) } returns ConsumerRecords(
             mapOf(
                 TopicPartition("test", 0) to listOf(
-                    ConsumerRecord(
+                    Record(
                         "test",
                         0,
                         0,
-                        "KEY1",
-                        "VALUE1"
+                        MixedValue(byteArrayOf(), "KEY1"),
+                        MixedValue(byteArrayOf(), "VALUE1")
                     )
                 )
             )

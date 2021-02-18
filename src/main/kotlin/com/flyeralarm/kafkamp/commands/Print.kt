@@ -1,5 +1,6 @@
 package com.flyeralarm.kafkamp.commands
 
+import com.flyeralarm.kafkamp.MixedValue
 import com.flyeralarm.kafkamp.prettyPrint
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
@@ -13,7 +14,7 @@ import java.util.concurrent.Callable
 )
 class Print(
     private val logger: Logger,
-    private val consumer: KafkaConsumer<Any?, Any?>,
+    private val consumer: KafkaConsumer<MixedValue?, MixedValue?>,
     private val noCommit: Boolean
 ) : Callable<Int> {
     @CommandLine.Parameters(

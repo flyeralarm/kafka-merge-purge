@@ -1,15 +1,14 @@
 package com.flyeralarm.kafkamp.commands
 
+import com.flyeralarm.kafkamp.MixedValue
 import com.flyeralarm.kafkamp.Pipeline
-import com.flyeralarm.kafkamp.RecordDeserializer
-import com.flyeralarm.kafkamp.RecordDeserializer.Record
+import com.flyeralarm.kafkamp.Record
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyOrder
 import kotlinx.coroutines.runBlocking
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.Logger
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,8 +18,9 @@ class PurgeAllTest {
     fun `produces records into destination topic and purges from source`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
-        val record = Record(originalRecord, "key", "value")
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
             val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
@@ -48,8 +48,9 @@ class PurgeAllTest {
     fun `logs number of successfully purged records`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
-        val record = Record(originalRecord, "key", "value")
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
             val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
@@ -77,9 +78,10 @@ class PurgeAllTest {
     fun `skips tombstone consumer records from merging by default`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
-        val record = Record(originalRecord, "key", "value")
-        val tombstoneRecord = Record(originalRecord, "key", null)
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
+        val tombstoneRecord = Record("source", 0, 0, key, null)
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
             val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
@@ -107,8 +109,9 @@ class PurgeAllTest {
     fun `exits with code 1 if pipeline throws exception and logs total purged`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
-        val record = Record(originalRecord, "key", "value")
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
         val exception = RuntimeException("test")
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {

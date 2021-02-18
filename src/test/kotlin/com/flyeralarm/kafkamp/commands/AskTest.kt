@@ -1,8 +1,8 @@
 package com.flyeralarm.kafkamp.commands
 
+import com.flyeralarm.kafkamp.MixedValue
 import com.flyeralarm.kafkamp.Pipeline
-import com.flyeralarm.kafkamp.RecordDeserializer
-import com.flyeralarm.kafkamp.RecordDeserializer.Record
+import com.flyeralarm.kafkamp.Record
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
@@ -11,7 +11,6 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifyOrder
 import kotlinx.coroutines.runBlocking
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.Logger
 import kotlin.test.Test
@@ -22,10 +21,9 @@ class AskTest {
     fun `produces records into destination topic and purges from source when action source yields MERGE`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val key = byteArrayOf(42)
-        val value = byteArrayOf(99)
-        val originalRecord = ConsumerRecord("source", 0, 0, key, value)
-        val record = Record(originalRecord, "key", "value")
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
             val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
@@ -57,8 +55,9 @@ class AskTest {
     fun `purges record from source topic without merging if action source yields PURGE`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
-        val record = Record(originalRecord, "key", "value")
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
             val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
@@ -93,8 +92,9 @@ class AskTest {
     fun `does nothing with record if action source yields SKIP`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
-        val record = Record(originalRecord, "key", "value")
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
             val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
@@ -126,8 +126,9 @@ class AskTest {
     fun `logs statistics for processed records`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
-        val record = Record(originalRecord, "key", "value")
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
             val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
@@ -174,9 +175,10 @@ class AskTest {
     fun `skips tombstone consumer records from merging by default`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
-        val record = Record(originalRecord, "key", "value")
-        val tombstoneRecord = Record(originalRecord, "key", null)
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
+        val tombstoneRecord = Record("source", 0, 0, key, null)
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
             val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
@@ -203,9 +205,10 @@ class AskTest {
     fun `merges tombstone consumer records when specified`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
-        val record = Record(originalRecord, "key", "value")
-        val tombstoneRecord = Record(originalRecord, "key", null)
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
+        val tombstoneRecord = Record("source", 0, 0, key, null)
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
             val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
@@ -233,8 +236,9 @@ class AskTest {
     fun `exits with code 1 if pipeline throws exception and logs processed statistics`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
-        val record = Record(originalRecord, "key", "value")
+        val key = MixedValue(byteArrayOf(42), "key")
+        val value = MixedValue(byteArrayOf(99), "value")
+        val record = Record("source", 0, 0, key, value)
         val exception = RuntimeException("test")
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
