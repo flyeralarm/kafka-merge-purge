@@ -2,6 +2,7 @@ package com.flyeralarm.kafkamp
 
 import com.flyeralarm.kafkamp.commands.Ask
 import com.flyeralarm.kafkamp.commands.MergeAll
+import com.flyeralarm.kafkamp.commands.Print
 import com.flyeralarm.kafkamp.commands.PurgeAll
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializer
@@ -115,6 +116,7 @@ class Factory(
             .addSubcommand(Ask::class.java)
             .addSubcommand(MergeAll::class.java)
             .addSubcommand(PurgeAll::class.java)
+            .addSubcommand(Print::class.java)
     }
 
     override fun <K : Any?> create(cls: Class<K>): K =
@@ -137,6 +139,7 @@ class Factory(
                 } as K
             MergeAll::class.java -> MergeAll(logger, pipeline) as K
             PurgeAll::class.java -> PurgeAll(logger, pipeline) as K
+            Print::class.java -> Print(logger, consumer, options.noCommit) as K
             else -> fallbackFactory.create(cls)
         }
 
