@@ -1,6 +1,8 @@
 package com.flyeralarm.kafkamp.commands
 
 import com.flyeralarm.kafkamp.Pipeline
+import com.flyeralarm.kafkamp.RecordDeserializer
+import com.flyeralarm.kafkamp.RecordDeserializer.Record
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -17,13 +19,14 @@ class PurgeAllTest {
     fun `produces records into destination topic and purges from source`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val consumerRecord = ConsumerRecord<Any?, Any?>("test", 0, 0, "key", "value")
+        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
+        val record = Record(originalRecord, "key", "value")
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
-            val callback = this.lambda<suspend Pipeline.Actions.(record: ConsumerRecord<Any?, Any?>) -> Unit>().captured
+            val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
 
             runBlocking {
-                actions.callback(consumerRecord)
+                actions.callback(record)
             }
         }
 
@@ -37,7 +40,7 @@ class PurgeAllTest {
         }
 
         coVerify {
-            actions.purge(consumerRecord)
+            actions.purge(record)
         }
     }
 
@@ -45,15 +48,16 @@ class PurgeAllTest {
     fun `logs number of successfully purged records`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val consumerRecord = ConsumerRecord<Any?, Any?>("test", 0, 0, "key", "value")
+        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
+        val record = Record(originalRecord, "key", "value")
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
-            val callback = this.lambda<suspend Pipeline.Actions.(record: ConsumerRecord<Any?, Any?>) -> Unit>().captured
+            val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
 
             runBlocking {
-                actions.callback(consumerRecord)
-                actions.callback(consumerRecord)
-                actions.callback(consumerRecord)
+                actions.callback(record)
+                actions.callback(record)
+                actions.callback(record)
             }
         }
 
@@ -73,16 +77,17 @@ class PurgeAllTest {
     fun `skips tombstone consumer records from merging by default`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val consumerRecord = ConsumerRecord<Any?, Any?>("test", 0, 0, "key", "value")
-        val tombstoneRecord = ConsumerRecord<Any?, Any?>("test", 0, 0, "key", null)
+        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
+        val record = Record(originalRecord, "key", "value")
+        val tombstoneRecord = Record(originalRecord, "key", null)
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
-            val callback = this.lambda<suspend Pipeline.Actions.(record: ConsumerRecord<Any?, Any?>) -> Unit>().captured
+            val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
 
             runBlocking {
-                actions.callback(consumerRecord)
+                actions.callback(record)
                 actions.callback(tombstoneRecord)
-                actions.callback(consumerRecord)
+                actions.callback(record)
             }
         }
 
@@ -102,14 +107,15 @@ class PurgeAllTest {
     fun `exits with code 1 if pipeline throws exception and logs total purged`() {
         val pipeline = mockk<Pipeline>(relaxed = true)
         val actions = mockk<Pipeline.Actions>(relaxed = true)
-        val consumerRecord = ConsumerRecord<Any?, Any?>("test", 0, 0, "key", "value")
+        val originalRecord = ConsumerRecord("source", 0, 0, byteArrayOf(42), byteArrayOf(99))
+        val record = Record(originalRecord, "key", "value")
         val exception = RuntimeException("test")
 
         every { pipeline.processTopic(any(), captureLambda()) } answers {
-            val callback = this.lambda<suspend Pipeline.Actions.(record: ConsumerRecord<Any?, Any?>) -> Unit>().captured
+            val callback = this.lambda<suspend Pipeline.Actions.(record: Record) -> Unit>().captured
 
             runBlocking {
-                actions.callback(consumerRecord)
+                actions.callback(record)
                 throw exception
             }
         }

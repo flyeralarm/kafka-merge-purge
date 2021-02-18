@@ -5,14 +5,15 @@ import com.flyeralarm.kafkamp.commands.MergeAll
 import com.flyeralarm.kafkamp.commands.Print
 import com.flyeralarm.kafkamp.commands.PurgeAll
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
-import io.confluent.kafka.serializers.KafkaAvroSerializer
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
+import org.apache.kafka.common.serialization.ByteArrayDeserializer
+import org.apache.kafka.common.serialization.ByteArraySerializer
+import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.StringDeserializer
-import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.Logger
 import picocli.CommandLine
 import java.nio.file.Files
@@ -30,7 +31,7 @@ class Factory(
     private val stdinScanner = Scanner(System.`in`)
 
     private val sharedProperties = buildProperties(options.propertiesFilePath, options.additionalProperties).toMap()
-    private val consumerProperties by lazy {
+    private val rawConsumerProperties by lazy {
         Properties().also {
             it[ConsumerConfig.ISOLATION_LEVEL_CONFIG] = "read_committed"
 
@@ -41,20 +42,27 @@ class Factory(
                 it[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = options.bootstrapServers
             }
 
-            if (options.keySerializer.avro) {
+            if (options.keyDeserializer.avro) {
                 it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = KafkaAvroDeserializer::class.java
-            } else if (options.keySerializer.string) {
+            } else if (options.keyDeserializer.string) {
                 it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
             }
 
-            if (options.valueSerializer.avro) {
+            if (options.valueDeserializer.avro) {
                 it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = KafkaAvroDeserializer::class.java
-            } else if (options.valueSerializer.string) {
+            } else if (options.valueDeserializer.string) {
                 it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
             }
 
             it[ConsumerConfig.GROUP_ID_CONFIG] = options.consumerGroup
             it[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = false
+        }
+    }
+
+    private val consumerProperties by lazy {
+        Properties(rawConsumerProperties).also {
+            it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = ByteArrayDeserializer::class.java
+            it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = ByteArrayDeserializer::class.java
         }
     }
 
@@ -70,17 +78,8 @@ class Factory(
                 it[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = options.bootstrapServers
             }
 
-            if (options.keySerializer.avro) {
-                it[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = KafkaAvroSerializer::class.java
-            } else if (options.keySerializer.string) {
-                it[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
-            }
-
-            if (options.valueSerializer.avro) {
-                it[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = KafkaAvroSerializer::class.java
-            } else if (options.valueSerializer.string) {
-                it[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
-            }
+            it[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = ByteArraySerializer::class.java
+            it[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = ByteArraySerializer::class.java
 
             if (options.transactionalId != null) {
                 val transactionalId = options.transactionalId?.takeIf { id -> id.isNotEmpty() }
@@ -93,14 +92,40 @@ class Factory(
         }
     }
 
-    private val consumer by lazy { KafkaConsumer<Any?, Any?>(consumerProperties) }
+    private val consumer by lazy { KafkaConsumer<ByteArray?, ByteArray?>(consumerProperties) }
+    private val producer by lazy { KafkaProducer<ByteArray?, ByteArray?>(producerProperties) }
 
-    private val producer by lazy { KafkaProducer<Any?, Any?>(producerProperties) }
+    private val keyDeserializer by lazy {
+        val consumerConfig = ConsumerConfig(rawConsumerProperties)
+
+        return@lazy when {
+            options.keyDeserializer.avro -> KafkaAvroDeserializer()
+            options.keyDeserializer.string -> StringDeserializer()
+            else -> consumerConfig.getConfiguredInstance(
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                Deserializer::class.java
+            )
+        }.also { it.configure(consumerConfig.originals(), true) }
+    }
+    private val valueDeserializer by lazy {
+        val consumerConfig = ConsumerConfig(rawConsumerProperties)
+
+        return@lazy when {
+            options.keyDeserializer.avro -> KafkaAvroDeserializer()
+            options.keyDeserializer.string -> StringDeserializer()
+            else -> consumerConfig.getConfiguredInstance(
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                Deserializer::class.java
+            )
+        }.also { it.configure(consumerConfig.originals(), true) }
+    }
+    private val recordDeserializer by lazy { RecordDeserializer(keyDeserializer, valueDeserializer) }
 
     private val pipeline by lazy {
         Pipeline(
             consumer,
             producer,
+            recordDeserializer,
             ProducerConfig.TRANSACTIONAL_ID_CONFIG in producerProperties,
             options.noCommit
         )
@@ -139,7 +164,7 @@ class Factory(
                 } as K
             MergeAll::class.java -> MergeAll(logger, pipeline) as K
             PurgeAll::class.java -> PurgeAll(logger, pipeline) as K
-            Print::class.java -> Print(logger, consumer, options.noCommit) as K
+            Print::class.java -> Print(logger, KafkaConsumer(rawConsumerProperties), options.noCommit) as K
             else -> fallbackFactory.create(cls)
         }
 

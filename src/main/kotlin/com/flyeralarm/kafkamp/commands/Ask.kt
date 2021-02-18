@@ -1,7 +1,6 @@
 package com.flyeralarm.kafkamp.commands
 
 import com.flyeralarm.kafkamp.Pipeline
-import com.flyeralarm.kafkamp.prettyPrint
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.Logger
 import picocli.CommandLine
@@ -41,27 +40,29 @@ class Ask(
 
         try {
             pipeline.processTopic(sourceTopic) { record ->
+                val serialized = record.original
+
                 // Do not merge tombstone records unless specified
-                if (record.value() == null && !mergeTombstones) {
-                    logger.debug("Skipping tombstone record at offset #${record.offset()} in topic '${record.topic()}' (Partition #${record.partition()})")
+                if (record.value == null && !mergeTombstones) {
+                    logger.debug("Skipping tombstone record at offset #${serialized.offset()} in topic '${serialized.topic()}' (Partition #${serialized.partition()})")
                     return@processTopic
                 }
 
                 logger.info(
-                    "Record at offset #${record.offset()} in topic '${record.topic()}' (Partition #${record.partition()}):\n" +
+                    "Record at offset #${serialized.offset()} in topic '${serialized.topic()}' (Partition #${serialized.partition()}):\n" +
                         record.prettyPrint("    ")
                 )
 
                 when (actionSource()) {
                     Action.MERGE -> {
-                        produce(ProducerRecord(destinationTopic, record.key(), record.value()))
+                        produce(ProducerRecord(destinationTopic, serialized.key(), serialized.value()))
                         purge(record)
-                        logger.info("Merged record with key ${record.key()} at offset #${record.offset()} from source topic '${record.topic()}' (Partition #${record.partition()}) into '$destinationTopic'")
+                        logger.info("Merged record with key ${record.key} at offset #${serialized.offset()} from source topic '${serialized.topic()}' (Partition #${serialized.partition()}) into '$destinationTopic'")
                         merged += 1
                     }
                     Action.PURGE -> {
                         purge(record)
-                        logger.info("Purged record with key ${record.key()} at offset #${record.offset()} from topic '${record.topic()}' (Partition #${record.partition()})")
+                        logger.info("Purged record with key ${record.key} at offset #${serialized.offset()} from topic '${serialized.topic()}' (Partition #${serialized.partition()})")
                         purged += 1
                     }
                     Action.SKIP -> {

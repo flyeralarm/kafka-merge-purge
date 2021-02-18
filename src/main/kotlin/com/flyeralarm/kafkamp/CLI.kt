@@ -117,13 +117,13 @@ class CLI {
         exclusive = true,
         heading = "Key (de)serializer\n"
     )
-    var keySerializer = DefaultKeySerializer()
+    var keyDeserializer = DefaultKeyDeserializer()
 
     @CommandLine.ArgGroup(
         exclusive = true,
         heading = "Value (de)serializer\n"
     )
-    var valueSerializer = DefaultValueSerializer()
+    var valueDeserializer = DefaultValueDeserializer()
 
     @CommandLine.Option(
         names = ["-v", "--verbose"],
@@ -138,33 +138,33 @@ class CLI {
         }
     }
 
-    class DefaultKeySerializer {
+    class DefaultKeyDeserializer {
         @CommandLine.Option(
             names = ["-A", "--avro-key"],
-            description = ["Force Avro (de)serializer for record keys"],
+            description = ["Force Avro deserializer for record keys"],
             scope = CommandLine.ScopeType.INHERIT
         )
         var avro = false
 
         @CommandLine.Option(
             names = ["-S", "--string-key"],
-            description = ["Force String (de)serializer for record keys"],
+            description = ["Force String deserializer for record keys"],
             scope = CommandLine.ScopeType.INHERIT
         )
         var string = false
     }
 
-    class DefaultValueSerializer {
+    class DefaultValueDeserializer {
         @CommandLine.Option(
             names = ["-a", "--avro"],
-            description = ["Force Avro (de)serializer for record values"],
+            description = ["Force Avro deserializer for record values"],
             scope = CommandLine.ScopeType.INHERIT
         )
         var avro = false
 
         @CommandLine.Option(
             names = ["-s", "--string"],
-            description = ["Force String (de)serializer for record values"],
+            description = ["Force String deserializer for record values"],
             scope = CommandLine.ScopeType.INHERIT
         )
         var string = false

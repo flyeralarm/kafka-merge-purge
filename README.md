@@ -56,11 +56,11 @@ Merges Kafka records from one topic into another, marking them as deleted in the
   -n, --no-commit           Do not commit consumer offsets
   -v, --verbose             Enable verbose logging
 Key (de)serializer
-  -A, --avro-key            Force Avro (de)serializer for record keys
-  -S, --string-key          Force String (de)serializer for record keys
+  -A, --avro-key            Force Avro deserializer for record keys
+  -S, --string-key          Force String deserializer for record keys
 Value (de)serializer
-  -a, --avro                Force Avro (de)serializer for record values
-  -s, --string              Force String (de)serializer for record values
+  -a, --avro                Force Avro deserializer for record values
+  -s, --string              Force String deserializer for record values
 ```
 
 ## Running in Docker
@@ -78,9 +78,9 @@ kafka-merge-purge supports transactions out of the box. Simply specify the `-t` 
 You may optionally specify the transactional ID to be used as a parameter to the `-t` option or through a configuration property.
 If no transactional ID is specified, a random UUID will be used.
 
-### Record (de)serialization
+### Record deserialization
 Currently, kafka-merge-purge only provides native support for the [Apache Avro](https://avro.apache.org/) serialization format.
-You may specify the `-A` and `-a` options to enable Avro (de)serialization for record keys and values respectively.
+You may specify the `-A` and `-a` options to enable Avro deserialization for record keys and values respectively.
 Note that you will have to provide the `schema.registry.url` configuration value as well in order for records to be (de)serialized according to their schema.
 
-String (de)serialization may be enabled using the `-S` and `-s` options.
+String deserialization may be enabled using the `-S` and `-s` options.

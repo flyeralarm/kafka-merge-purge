@@ -1,7 +1,6 @@
 package com.flyeralarm.kafkamp.commands
 
 import com.flyeralarm.kafkamp.Pipeline
-import com.flyeralarm.kafkamp.prettyPrint
 import org.slf4j.Logger
 import picocli.CommandLine
 import java.util.concurrent.Callable
@@ -22,18 +21,20 @@ class PurgeAll(private val logger: Logger, private val pipeline: Pipeline) : Cal
         var purged = 0
         try {
             pipeline.processTopic(topic) { record ->
+                val serialized = record.original
+
                 // Skip tombstone records, they're already purged
-                if (record.value() == null) {
-                    logger.debug("Skipping tombstone record at offset #${record.offset()} in topic '${record.topic()}' (Partition #${record.partition()})")
+                if (record.value == null) {
+                    logger.debug("Skipping tombstone record at offset #${serialized.offset()} in topic '${serialized.topic()}' (Partition #${serialized.partition()})")
                     return@processTopic
                 }
 
                 logger.debug(
-                    "Purging record at offset #${record.offset()} in topic '${record.topic()}' (Partition #${record.partition()}):\n" +
+                    "Purging record at offset #${serialized.offset()} in topic '${serialized.topic()}' (Partition #${serialized.partition()}):\n" +
                         record.prettyPrint("    ")
                 )
                 purge(record)
-                logger.info("Purged record with key ${record.key()} at offset #${record.offset()} from topic '${record.topic()}' (Partition #${record.partition()})")
+                logger.info("Purged record with key ${record.key} at offset #${serialized.offset()} from topic '${serialized.topic()}' (Partition #${serialized.partition()})")
                 purged += 1
             }
         } catch (exception: Exception) {

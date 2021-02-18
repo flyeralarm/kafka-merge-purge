@@ -194,7 +194,7 @@ class CLITest {
                 "-g", "test"
             )
 
-        assertTrue(options.keySerializer.avro)
+        assertTrue(options.keyDeserializer.avro)
     }
 
     @Test
@@ -207,7 +207,7 @@ class CLITest {
                 "-g", "test"
             )
 
-        assertTrue(options.keySerializer.string)
+        assertTrue(options.keyDeserializer.string)
     }
 
     @Test
@@ -235,7 +235,7 @@ class CLITest {
                 "-g", "test"
             )
 
-        assertTrue(options.valueSerializer.avro)
+        assertTrue(options.valueDeserializer.avro)
     }
 
     @Test
@@ -248,7 +248,7 @@ class CLITest {
                 "-g", "test"
             )
 
-        assertTrue(options.valueSerializer.string)
+        assertTrue(options.valueDeserializer.string)
     }
 
     @Test

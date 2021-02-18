@@ -1,7 +1,6 @@
 package com.flyeralarm.kafkamp
 
 import kotlinx.coroutines.runBlocking
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -13,8 +12,9 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 class Pipeline(
-    private val consumer: KafkaConsumer<Any?, Any?>,
-    private val producer: KafkaProducer<Any?, Any?>,
+    private val consumer: KafkaConsumer<ByteArray?, ByteArray?>,
+    private val producer: KafkaProducer<ByteArray?, ByteArray?>,
+    private val recordDeserializer: RecordDeserializer,
     private val transactions: Boolean,
     private val noCommit: Boolean
 ) {
@@ -28,7 +28,7 @@ class Pipeline(
 
     fun processTopic(
         topic: String,
-        consume: suspend Actions.(record: ConsumerRecord<Any?, Any?>) -> Unit
+        consume: suspend Actions.(record: RecordDeserializer.Record) -> Unit
     ) {
         consumer.use {
             consumer.subscribe(listOf(topic))
@@ -44,8 +44,10 @@ class Pipeline(
                         val offsets = mutableMapOf<TopicPartition, OffsetAndMetadata>()
 
                         for (record in records) {
+                            val deserialized = recordDeserializer.deserialize(record)
+
                             runBlocking {
-                                actions.consume(record)
+                                actions.consume(deserialized)
                             }
 
                             offsets[TopicPartition(record.topic(), record.partition())] =
@@ -77,7 +79,7 @@ class Pipeline(
     }
 
     inner class Actions {
-        suspend fun produce(record: ProducerRecord<Any?, Any?>) {
+        suspend fun produce(record: ProducerRecord<ByteArray?, ByteArray?>) {
             suspendCoroutine<Unit> {
                 producer.send(record) { _, exception ->
                     if (exception != null) {
@@ -89,13 +91,13 @@ class Pipeline(
             }
         }
 
-        suspend fun purge(record: ConsumerRecord<Any?, Any?>) {
+        suspend fun purge(record: RecordDeserializer.Record) {
             // Tombstone records are already marked for deletion, so do not purge them again
-            if (record.value() == null) {
+            if (record.value == null) {
                 return
             }
 
-            produce(ProducerRecord(record.topic(), record.partition(), record.key(), null))
+            produce(ProducerRecord(record.original.topic(), record.original.partition(), record.original.key(), null))
         }
     }
 }
