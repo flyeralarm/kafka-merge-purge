@@ -17,7 +17,7 @@ Currently, these defaults include the idempotent mode and `all` acknowledgements
 the `read_committed` isolation level for the consumer.
 
 ## Usage
-```bash
+```sh
 Usage: kafka-merge-purge [-hnvV] [-t[=<transactionalId>]] [-b=<bootstrapServers>]
                          [-C=<consumerPropertiesFilePath>] -g=<consumerGroup> [-O=<propertiesFilePath>]
                          [-P=<producerPropertiesFilePath>] [-c=<String=String>]...
@@ -66,7 +66,7 @@ Value (de)serializer
 ## Running in Docker
 `kafka-merge-purge` is available through Docker Hub, so running it in a container is as easy as:
 
-```bash
+```sh
 docker run -v "$(pwd)/":/data flyeralarm/kafka-merge-purge --properties /data/client.properties -g consumer-group ask sourceTopic destinationTopic
 ```
 
@@ -84,3 +84,20 @@ You may specify the `-A` and `-a` options to enable Avro deserialization for rec
 Note that you will have to provide the `schema.registry.url` configuration value as well in order for records to be (de)serialized according to their schema.
 
 String deserialization may be enabled using the `-S` and `-s` options.
+
+## Development
+
+Docker is used to build and test `kafka-merge-purge` for development.
+
+```sh
+# test & build
+docker build -t flyeralarm/kafka-merge-purge .
+
+# run it in Docker
+docker run -v "$(pwd)/":/data flyeralarm/kafka-merge-purge --properties /data/client.properties -g consumer-group ask sourceTopic destinationTopic
+```
+
+If you want to execute the application outside of Docker, you may use the `run` Gradle task. For example:
+```sh
+./gradlew run --args="--properties client.properties -g consumer-group ask sourceTopic destinationTopic"
+```
