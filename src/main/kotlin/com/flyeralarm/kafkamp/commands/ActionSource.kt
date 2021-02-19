@@ -11,7 +11,7 @@ fun streamActionSource(stream: InputStream, logger: Logger, promptLogger: Logger
         {
             generateSequence {
                 promptLogger.info("Would you like to (M)erge, (p)urge or (s)kip the record?")
-                return@generateSequence scanner.nextLine().toLowerCase().takeIf { it.isNotEmpty() } ?: 'm'
+                return@generateSequence scanner.nextLine().toLowerCase().takeIf { it.isNotEmpty() } ?: "m"
             }.mapNotNull {
                 when (it) {
                     "m" -> Ask.Action.MERGE

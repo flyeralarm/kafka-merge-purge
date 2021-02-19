@@ -4,32 +4,45 @@ import com.flyeralarm.kafkamp.commands.Ask
 import com.flyeralarm.kafkamp.commands.MergeAll
 import com.flyeralarm.kafkamp.commands.Print
 import com.flyeralarm.kafkamp.commands.PurgeAll
+import com.flyeralarm.kafkamp.commands.streamActionSource
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.Logger
 import picocli.CommandLine
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Properties
-import java.util.Scanner
 import java.util.UUID
 
 class Factory(
     private val options: CLI,
     private val logger: Logger,
-    private val promptLogger: Logger
+    private val promptLogger: Logger,
+    private val consumerProvider: (Properties) -> KafkaConsumer<MixedValue?, MixedValue?> = ::KafkaConsumer,
+    private val producerProvider: (Properties) -> KafkaProducer<MixedValue?, MixedValue?> = ::KafkaProducer
 ) : CommandLine.IFactory {
     private val fallbackFactory = CommandLine.defaultFactory()
-    private val stdinScanner = Scanner(System.`in`)
 
-    private val sharedProperties = buildProperties(options.propertiesFilePath, options.additionalProperties).toMap()
-    private val consumerProperties by lazy {
+    val commandLine by lazy {
+        CommandLine(options, this)
+            .setExecutionExceptionHandler { ex, _, _ ->
+                logger.error("Failed to execute command", ex)
+
+                return@setExecutionExceptionHandler 1
+            }
+            .addSubcommand(Ask::class.java)
+            .addSubcommand(MergeAll::class.java)
+            .addSubcommand(PurgeAll::class.java)
+            .addSubcommand(Print::class.java)
+    }
+
+    val sharedProperties = buildProperties(options.propertiesFilePath, options.additionalProperties).toMap()
+    val consumerProperties by lazy {
         Properties().also {
             it[ConsumerConfig.ISOLATION_LEVEL_CONFIG] = "read_committed"
 
@@ -68,7 +81,7 @@ class Factory(
         }
     }
 
-    private val producerProperties by lazy {
+    val producerProperties by lazy {
         Properties().also {
             it[ProducerConfig.ACKS_CONFIG] = "all"
             it[ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG] = true
@@ -94,8 +107,8 @@ class Factory(
         }
     }
 
-    private val consumer by lazy { KafkaConsumer<MixedValue?, MixedValue?>(consumerProperties) }
-    private val producer by lazy { KafkaProducer<MixedValue?, MixedValue?>(producerProperties) }
+    private val consumer by lazy { consumerProvider(consumerProperties) }
+    private val producer by lazy { producerProvider(producerProperties) }
 
     private val pipeline by lazy {
         Pipeline(
@@ -106,37 +119,11 @@ class Factory(
         )
     }
 
-    val commandLine by lazy {
-        CommandLine(options, this)
-            .setExecutionExceptionHandler { ex, _, _ ->
-                logger.error("Failed to execute command", ex)
-
-                return@setExecutionExceptionHandler 1
-            }
-            .addSubcommand(Ask::class.java)
-            .addSubcommand(MergeAll::class.java)
-            .addSubcommand(PurgeAll::class.java)
-            .addSubcommand(Print::class.java)
-    }
-
+    @Suppress("UNCHECKED_CAST")
     override fun <K : Any?> create(cls: Class<K>): K =
         when (cls) {
             Ask::class.java ->
-                Ask(logger, pipeline) {
-                    while (true) {
-                        promptLogger.info("Would you like to (M)erge, (p)urge or (s)kip the record?")
-                        when (stdinScanner.nextLine().toLowerCase().takeIf { it.isNotEmpty() } ?: 'm') {
-                            "m" -> return@Ask Ask.Action.MERGE
-                            "p" -> return@Ask Ask.Action.PURGE
-                            "s" -> return@Ask Ask.Action.SKIP
-                            else -> {
-                                logger.info("Unknown option, try again.")
-                                continue
-                            }
-                        }
-                    }
-                    return@Ask Ask.Action.MERGE
-                } as K
+                Ask(logger, pipeline, streamActionSource(System.`in`, logger, promptLogger)) as K
             MergeAll::class.java -> MergeAll(logger, pipeline) as K
             PurgeAll::class.java -> PurgeAll(logger, pipeline) as K
             Print::class.java -> Print(logger, consumer, options.noCommit) as K

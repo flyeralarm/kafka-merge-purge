@@ -14,7 +14,7 @@ import java.util.concurrent.Callable
 class Ask(
     private val logger: Logger,
     private val pipeline: Pipeline,
-    private val actionSource: () -> Action
+    private val actionSource: ActionSource
 ) : Callable<Int> {
     @CommandLine.Option(
         names = ["-T", "--merge-tombstones"],
