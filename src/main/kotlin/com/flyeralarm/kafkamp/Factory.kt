@@ -101,7 +101,7 @@ class Factory(
         Pipeline(
             consumer,
             producer,
-            ProducerConfig.TRANSACTIONAL_ID_CONFIG in producerProperties,
+            producerProperties.containsKey(ProducerConfig.TRANSACTIONAL_ID_CONFIG),
             options.noCommit
         )
     }
