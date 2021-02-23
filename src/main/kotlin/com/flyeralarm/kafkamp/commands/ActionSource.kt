@@ -10,7 +10,7 @@ fun streamActionSource(stream: InputStream, logger: Logger, promptLogger: Logger
     Scanner(stream).let { scanner ->
         {
             generateSequence {
-                promptLogger.info("Would you like to (M)erge, (p)urge or (s)kip the record?")
+                promptLogger.info("Would you like to (m)erge, (p)urge or (s)kip the record? (default: merge)")
                 return@generateSequence scanner.nextLine().toLowerCase().takeIf { it.isNotEmpty() } ?: "m"
             }.mapNotNull {
                 when (it) {

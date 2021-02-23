@@ -16,7 +16,7 @@ class ActionSourceTest {
             streamActionSource(it, mockk(relaxed = true), promptLogger)()
 
             verify(exactly = 1) {
-                promptLogger.info("Would you like to (M)erge, (p)urge or (s)kip the record?")
+                promptLogger.info("Would you like to (m)erge, (p)urge or (s)kip the record? (default: merge)")
             }
         }
     }
@@ -64,9 +64,9 @@ class ActionSourceTest {
             assertEquals(Ask.Action.MERGE, streamActionSource(it, logger, promptLogger)())
 
             verifyOrder {
-                promptLogger.info("Would you like to (M)erge, (p)urge or (s)kip the record?")
+                promptLogger.info("Would you like to (m)erge, (p)urge or (s)kip the record? (default: merge)")
                 logger.info("Unknown option, try again.")
-                promptLogger.info("Would you like to (M)erge, (p)urge or (s)kip the record?")
+                promptLogger.info("Would you like to (m)erge, (p)urge or (s)kip the record? (default: merge)")
             }
         }
     }
