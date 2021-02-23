@@ -69,11 +69,24 @@ Commands:
   print      Prints all records from the specified topic
 ```
 
+Supported shared, consumer and producer properties are those listed in the official documentation for [consumers](https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html)
+and [producers](https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html) respectively.
+
 ## Running in Docker
 `kafka-merge-purge` is available through Docker Hub, so running it in a container is as easy as:
 
 ```sh
-docker run -v "$(pwd)/":/data flyeralarm/kafka-merge-purge --properties /data/client.properties -g consumer-group ask sourceTopic destinationTopic
+docker run --rm -it -v "$(pwd)/":/data flyeralarm/kafka-merge-purge -b kafka.example.com:9092 -g consumer-group ask sourceTopic destinationTopic
+```
+
+A more complete example with an external properties file and Avro for value deserialization might look as follows.
+```sh
+docker run --rm -it -v "$(pwd)/":/data flyeralarm/kafka-merge-purge --properties /data/client.properties -g consumer-group -a ask sourceTopic destinationTopic
+```
+This requires a `client.properties` file in your current working directory, with the following content:
+```properties
+bootstrap.servers=kafka.example.com:9092
+schema.registry.url=http://schema-registry.example.com
 ```
 
 Please keep in mind that using a tagged release may be a good idea.
@@ -100,7 +113,7 @@ Docker is used to build and test `kafka-merge-purge` for development.
 docker build -t flyeralarm/kafka-merge-purge .
 
 # run it in Docker
-docker run -v "$(pwd)/":/data flyeralarm/kafka-merge-purge --properties /data/client.properties -g consumer-group ask sourceTopic destinationTopic
+docker run --rm -it -v "$(pwd)/":/data flyeralarm/kafka-merge-purge -b kafka:9092 -g consumer-group ask sourceTopic destinationTopic
 ```
 
 If you want to execute the application outside of Docker, you may use the `run` Gradle task. For example:
