@@ -45,6 +45,8 @@ class Factory(
     val consumerProperties by lazy {
         Properties().also {
             it[ConsumerConfig.ISOLATION_LEVEL_CONFIG] = "read_committed"
+            it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
+            it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
 
             it.putAll(sharedProperties)
             it.putAll(buildProperties(options.consumerPropertiesFilePath, options.additionalConsumerProperties))
@@ -53,16 +55,12 @@ class Factory(
                 it[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = options.bootstrapServers
             }
 
-            if (options.keyDeserializer.avro) {
+            if (options.avroKeyDeserializer) {
                 it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = KafkaAvroDeserializer::class.java
-            } else if (options.keyDeserializer.string) {
-                it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
             }
 
-            if (options.valueDeserializer.avro) {
+            if (options.avroValueDeserializer) {
                 it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = KafkaAvroDeserializer::class.java
-            } else if (options.valueDeserializer.string) {
-                it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
             }
 
             if (it.containsKey(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG)) {

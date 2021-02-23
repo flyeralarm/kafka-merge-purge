@@ -113,17 +113,25 @@ class CLI {
     )
     var noCommit = false
 
-    @CommandLine.ArgGroup(
-        exclusive = true,
-        heading = "Key (de)serializer\n"
+    @CommandLine.Option(
+        names = ["-A", "--avro-key"],
+        description = [
+            "Force Avro deserializer for record keys.",
+            "Requires schema.registry.url consumer property to be set"
+        ],
+        scope = CommandLine.ScopeType.INHERIT
     )
-    var keyDeserializer = DefaultKeyDeserializer()
+    var avroKeyDeserializer = false
 
-    @CommandLine.ArgGroup(
-        exclusive = true,
-        heading = "Value (de)serializer\n"
+    @CommandLine.Option(
+        names = ["-a", "--avro"],
+        description = [
+            "Force Avro deserializer for record values.",
+            "Requires schema.registry.url consumer property to be set"
+        ],
+        scope = CommandLine.ScopeType.INHERIT
     )
-    var valueDeserializer = DefaultValueDeserializer()
+    var avroValueDeserializer = false
 
     @CommandLine.Option(
         names = ["-v", "--verbose"],

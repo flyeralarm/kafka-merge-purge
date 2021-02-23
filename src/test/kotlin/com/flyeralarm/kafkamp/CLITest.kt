@@ -185,7 +185,7 @@ class CLITest {
     }
 
     @Test
-    fun `can set and get Avro key (de)serializer`() {
+    fun `can set and get Avro key deserializer`() {
         val options = CLI()
         CommandLine(options)
             .setErr(PrintWriter(out))
@@ -194,39 +194,11 @@ class CLITest {
                 "-g", "test"
             )
 
-        assertTrue(options.keyDeserializer.avro)
+        assertTrue(options.avroKeyDeserializer)
     }
 
     @Test
-    fun `can set and get String key (de)serializer`() {
-        val options = CLI()
-        CommandLine(options)
-            .setErr(PrintWriter(out))
-            .parseArgs(
-                "--string-key",
-                "-g", "test"
-            )
-
-        assertTrue(options.keyDeserializer.string)
-    }
-
-    @Test
-    fun `String and Avro key (de)serializer options are mutually exclusives`() {
-        val options = CLI()
-
-        assertThrows<CommandLine.MutuallyExclusiveArgsException>("Error: --avro-key, --string-key are mutually exclusive (specify only one)") {
-            CommandLine(options)
-                .setErr(PrintWriter(out))
-                .parseArgs(
-                    "--string-key",
-                    "--avro-key",
-                    "-g", "test"
-                )
-        }
-    }
-
-    @Test
-    fun `can set and get Avro value (de)serializer`() {
+    fun `can set and get Avro value deserializer`() {
         val options = CLI()
         CommandLine(options)
             .setErr(PrintWriter(out))
@@ -235,35 +207,7 @@ class CLITest {
                 "-g", "test"
             )
 
-        assertTrue(options.valueDeserializer.avro)
-    }
-
-    @Test
-    fun `can set and get String value (de)serializer`() {
-        val options = CLI()
-        CommandLine(options)
-            .setErr(PrintWriter(out))
-            .parseArgs(
-                "--string",
-                "-g", "test"
-            )
-
-        assertTrue(options.valueDeserializer.string)
-    }
-
-    @Test
-    fun `String and Avro value (de)serializer options are mutually exclusives`() {
-        val options = CLI()
-
-        assertThrows<CommandLine.MutuallyExclusiveArgsException>("Error: --avro, --string are mutually exclusive (specify only one)") {
-            CommandLine(options)
-                .setErr(PrintWriter(out))
-                .parseArgs(
-                    "--string",
-                    "--avro",
-                    "-g", "test"
-                )
-        }
+        assertTrue(options.avroValueDeserializer)
     }
 
     @Test

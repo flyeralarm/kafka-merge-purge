@@ -16,51 +16,57 @@ The application uses sane defaults for both producers and consumers, which parti
 Currently, these defaults include the idempotent mode and `all` acknowledgements for the producer as well as
 the `read_committed` isolation level for the consumer.
 
+Note that records will be deserialized for display purposes, but will always be written as their raw, untouched bytes.
+
 ## Usage
 ```sh
-Usage: kafka-merge-purge [-hnvV] [-t[=<transactionalId>]] [-b=<bootstrapServers>]
-                         [-C=<consumerPropertiesFilePath>] -g=<consumerGroup> [-O=<propertiesFilePath>]
-                         [-P=<producerPropertiesFilePath>] [-c=<String=String>]...
-                         [-o=<String=String>]... [-p=<String=String>]... [-A | -S] [-a | -s]
+Usage: kafka-merge-purge [-aAhnvV] [-t[=<transactionalId>]] [-b=<bootstrapServers>] [-C=<consumerPropertiesFilePath>]
+                         -g=<consumerGroup> [-O=<propertiesFilePath>] [-P=<producerPropertiesFilePath>]
+                         [-c=<String=String>]... [-o=<String=String>]... [-p=<String=String>]...
                          (ask | merge-all | purge-all | print)
 Merges Kafka records from one topic into another, marking them as deleted in the old topic in the process
-  -h, --help                Show this help message and exit.
-  -V, --version             Print version information and exit.
+  -A, --avro-key    Force Avro deserializer for record keys.
+                    Requires schema.registry.url consumer property to be set
+  -a, --avro        Force Avro deserializer for record values.
+                    Requires schema.registry.url consumer property to be set
+  -h, --help        Show this help message and exit.
+  -V, --version     Print version information and exit.
   -b, --bootstrap-servers=<bootstrapServers>
-                            Kafka Bootstrap servers as comma-delimited list.
-                            Takes precedence over properties files.
+                    Kafka Bootstrap servers as comma-delimited list.
+                    Takes precedence over properties files.
   -g, --group=<consumerGroup>
-                            Consumer group for ingesting the source topic
+                    Consumer group for ingesting the source topic
   -O, --properties=<propertiesFilePath>
-                            A Java Properties file for shared client configuration (optional)
+                    A Java Properties file for shared client configuration (optional)
   -o, --property=<String=String>
-                            Specify a shared client configuration property directly.
-                            May be used multiple times.
-                            These options takes precedence over properties files.
+                    Specify a shared client configuration property directly.
+                    May be used multiple times.
+                    These options takes precedence over properties files.
   -C, --consumer-properties=<consumerPropertiesFilePath>
-                            A Java Properties file for consumer client configuration (optional)
+                    A Java Properties file for consumer client configuration (optional)
   -c, --consumer-property=<String=String>
-                            Specify a consumer client configuration property directly.
-                            May be used multiple times.
-                            These options takes precedence over properties files.
+                    Specify a consumer client configuration property directly.
+                    May be used multiple times.
+                    These options takes precedence over properties files.
   -P, --producer-properties=<producerPropertiesFilePath>
-                            A Java Properties file for consumer client configuration (optional)
+                    A Java Properties file for consumer client configuration (optional)
   -p, --producer-property=<String=String>
-                            Specify a producer client configuration property directly.
-                            May be used multiple times.
-                            These options takes precedence over properties files.
+                    Specify a producer client configuration property directly.
+                    May be used multiple times.
+                    These options takes precedence over properties files.
   -t, --transaction[=<transactionalId>]
-                            Produce records within a transaction.
-                            Optional value is the transactional ID to use.
-                            Defaults to a random UUID
-  -n, --no-commit           Do not commit consumer offsets
-  -v, --verbose             Enable verbose logging
-Key (de)serializer
-  -A, --avro-key            Force Avro deserializer for record keys
-  -S, --string-key          Force String deserializer for record keys
-Value (de)serializer
-  -a, --avro                Force Avro deserializer for record values
-  -s, --string              Force String deserializer for record values
+                    Produce records within a transaction.
+                    Optional value is the transactional ID to use.
+                    Defaults to a random UUID
+  -n, --no-commit   Do not commit consumer offsets
+  -v, --verbose     Enable verbose logging
+Commands:
+  ask        Asks for every record from the source topic whether it should be merged into the destination topic or
+               simply purged
+  merge-all  Merges all records from the source topic into the specified destination topic and marks them for deletion
+               in the source topic
+  purge-all  Purges (i.e. writes a tombstone record for) every record from the specified topic
+  print      Prints all records from the specified topic
 ```
 
 ## Running in Docker
@@ -79,11 +85,11 @@ You may optionally specify the transactional ID to be used as a parameter to the
 If no transactional ID is specified, a random UUID will be used.
 
 ### Record deserialization
-Currently, kafka-merge-purge only provides native support for the [Apache Avro](https://avro.apache.org/) serialization format.
-You may specify the `-A` and `-a` options to enable Avro deserialization for record keys and values respectively.
-Note that you will have to provide the `schema.registry.url` configuration value as well in order for records to be (de)serialized according to their schema.
+By default, record keys and values will be deserialized as strings. You can influence this through the regular `key.deserializer` and `value.deserializer` consumer properties.
 
-String deserialization may be enabled using the `-S` and `-s` options.
+Currently, kafka-merge-purge only comes with native support for the [Apache Avro](https://avro.apache.org/) serialization format in addition the standard deserializers provided by Kafka.
+You may specify the `-A` and `-a` options to enable Avro deserialization for record keys and values respectively.
+Note that you will have to provide the `schema.registry.url` consumer property as well in order for records to be serialized according to their schema.
 
 ## Development
 

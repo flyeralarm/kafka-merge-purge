@@ -132,6 +132,9 @@ class FactoryTest {
 
                 it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = MixedValue.Deserializer::class.java
                 it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = MixedValue.Deserializer::class.java
+
+                it[MixedValue.Deserializer.KEY_DELEGATE_CONFIG] = StringDeserializer::class.java
+                it[MixedValue.Deserializer.VALUE_DELEGATE_CONFIG] = StringDeserializer::class.java
             },
             factory.consumerProperties
         )
@@ -161,6 +164,9 @@ class FactoryTest {
 
                 it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = MixedValue.Deserializer::class.java
                 it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = MixedValue.Deserializer::class.java
+
+                it[MixedValue.Deserializer.KEY_DELEGATE_CONFIG] = StringDeserializer::class.java
+                it[MixedValue.Deserializer.VALUE_DELEGATE_CONFIG] = StringDeserializer::class.java
             },
             factory.consumerProperties
         )
@@ -288,27 +294,11 @@ class FactoryTest {
         options.additionalConsumerProperties = mapOf(
             ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to "key_deserializer"
         )
-        options.keyDeserializer.avro = true
+        options.avroKeyDeserializer = true
 
         val factory = Factory(options, mockk(relaxed = true), mockk(relaxed = true))
         assertEquals(
             KafkaAvroDeserializer::class.java,
-            factory.consumerProperties[MixedValue.Deserializer.KEY_DELEGATE_CONFIG]
-        )
-    }
-
-    @Test
-    fun `overrides specified key deserializer with String if requested`() {
-        val options = CLI()
-        options.consumerGroup = "consumer-group"
-        options.additionalConsumerProperties = mapOf(
-            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to "key_deserializer"
-        )
-        options.keyDeserializer.string = true
-
-        val factory = Factory(options, mockk(relaxed = true), mockk(relaxed = true))
-        assertEquals(
-            StringDeserializer::class.java,
             factory.consumerProperties[MixedValue.Deserializer.KEY_DELEGATE_CONFIG]
         )
     }
@@ -320,27 +310,11 @@ class FactoryTest {
         options.additionalConsumerProperties = mapOf(
             ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to "value_deserializer"
         )
-        options.valueDeserializer.avro = true
+        options.avroValueDeserializer = true
 
         val factory = Factory(options, mockk(relaxed = true), mockk(relaxed = true))
         assertEquals(
             KafkaAvroDeserializer::class.java,
-            factory.consumerProperties[MixedValue.Deserializer.VALUE_DELEGATE_CONFIG]
-        )
-    }
-
-    @Test
-    fun `overrides specified value deserializer with String if requested`() {
-        val options = CLI()
-        options.consumerGroup = "consumer-group"
-        options.additionalConsumerProperties = mapOf(
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to "value_deserializer"
-        )
-        options.valueDeserializer.string = true
-
-        val factory = Factory(options, mockk(relaxed = true), mockk(relaxed = true))
-        assertEquals(
-            StringDeserializer::class.java,
             factory.consumerProperties[MixedValue.Deserializer.VALUE_DELEGATE_CONFIG]
         )
     }
