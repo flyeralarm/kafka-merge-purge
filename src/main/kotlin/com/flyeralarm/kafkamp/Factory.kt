@@ -45,6 +45,7 @@ class Factory(
     val consumerProperties by lazy {
         Properties().also {
             it[ConsumerConfig.ISOLATION_LEVEL_CONFIG] = "read_committed"
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
             it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
             it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
 

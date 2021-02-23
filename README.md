@@ -14,7 +14,9 @@ message in the source topic.
 
 The application uses sane defaults for both producers and consumers, which partially may be overwritten by the user.
 Currently, these defaults include the idempotent mode and `all` acknowledgements for the producer as well as
-the `read_committed` isolation level for the consumer.
+the `read_committed` isolation level for the consumer. Furthermore, the consumer property `auto.offset.reset` is set to
+`earliest` by default, since records from the source topic usually are marked for deletion so their offsets might no longer
+be available for the next execution of the application.
 
 Note that records will be deserialized for display purposes, but will always be written as their raw, untouched bytes.
 

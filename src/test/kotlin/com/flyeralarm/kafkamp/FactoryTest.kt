@@ -126,6 +126,7 @@ class FactoryTest {
                 it["overridable.property"] = "after"
 
                 it[ConsumerConfig.ISOLATION_LEVEL_CONFIG] = "read_committed"
+                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
 
                 it[ConsumerConfig.GROUP_ID_CONFIG] = "consumer-group"
                 it[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = false
@@ -158,6 +159,7 @@ class FactoryTest {
                 it["file.property"] = "value"
 
                 it[ConsumerConfig.ISOLATION_LEVEL_CONFIG] = "read_committed"
+                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
 
                 it[ConsumerConfig.GROUP_ID_CONFIG] = "consumer-group"
                 it[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = false
@@ -258,6 +260,18 @@ class FactoryTest {
 
         val factory = Factory(options, mockk(relaxed = true), mockk(relaxed = true))
         assertEquals("read_uncommitted", factory.consumerProperties[ConsumerConfig.ISOLATION_LEVEL_CONFIG])
+    }
+
+    @Test
+    fun `overrides auto offset reset in consumer properties if provided`() {
+        val options = CLI()
+        options.consumerGroup = "consumer-group"
+        options.additionalConsumerProperties = mapOf(
+            ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "none"
+        )
+
+        val factory = Factory(options, mockk(relaxed = true), mockk(relaxed = true))
+        assertEquals("none", factory.consumerProperties[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG])
     }
 
     @Test
