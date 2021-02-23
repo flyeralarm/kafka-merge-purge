@@ -10,7 +10,7 @@ import java.util.concurrent.Callable
 
 @CommandLine.Command(
     name = "print",
-    description = ["Prints all records from the specified topic"]
+    description = ["Prints all records from the specified topic. Does not commit offsets by default"]
 )
 class Print(
     private val logger: Logger,

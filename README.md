@@ -22,53 +22,55 @@ Note that records will be deserialized for display purposes, but will always be 
 
 ## Usage
 ```sh
-Usage: kafka-merge-purge [-aAhnvV] [-t[=<transactionalId>]] [-b=<bootstrapServers>] [-C=<consumerPropertiesFilePath>]
-                         -g=<consumerGroup> [-O=<propertiesFilePath>] [-P=<producerPropertiesFilePath>]
-                         [-c=<String=String>]... [-o=<String=String>]... [-p=<String=String>]...
-                         (ask | merge-all | purge-all | print)
+Usage: kafka-merge-purge [-aAhvV] [-n[=<noCommit>]] [-t[=<transactionalId>]] [-b=<bootstrapServers>]
+                         [-C=<consumerPropertiesFilePath>] -g=<consumerGroup> [-O=<propertiesFilePath>]
+                         [-P=<producerPropertiesFilePath>] [-c=<String=String>]... [-o=<String=String>]...
+                         [-p=<String=String>]... (ask | merge-all | purge-all | print)
 Merges Kafka records from one topic into another, marking them as deleted in the old topic in the process
-  -A, --avro-key    Force Avro deserializer for record keys.
-                    Requires schema.registry.url consumer property to be set
-  -a, --avro        Force Avro deserializer for record values.
-                    Requires schema.registry.url consumer property to be set
-  -h, --help        Show this help message and exit.
-  -V, --version     Print version information and exit.
+  -h, --help       Show this help message and exit.
+  -V, --version    Print version information and exit.
   -b, --bootstrap-servers=<bootstrapServers>
-                    Kafka Bootstrap servers as comma-delimited list.
-                    Takes precedence over properties files.
+                   Kafka Bootstrap servers as comma-delimited list.
+                   Takes precedence over properties files.
   -g, --group=<consumerGroup>
-                    Consumer group for ingesting the source topic
+                   Consumer group for ingesting the source topic
   -O, --properties=<propertiesFilePath>
-                    A Java Properties file for shared client configuration (optional)
+                   A Java Properties file for shared client configuration (optional)
   -o, --property=<String=String>
-                    Specify a shared client configuration property directly.
-                    May be used multiple times.
-                    These options takes precedence over properties files.
+                   Specify a shared client configuration property directly.
+                   May be used multiple times.
+                   These options takes precedence over properties files.
   -C, --consumer-properties=<consumerPropertiesFilePath>
-                    A Java Properties file for consumer client configuration (optional)
+                   A Java Properties file for consumer client configuration (optional)
   -c, --consumer-property=<String=String>
-                    Specify a consumer client configuration property directly.
-                    May be used multiple times.
-                    These options takes precedence over properties files.
+                   Specify a consumer client configuration property directly.
+                   May be used multiple times.
+                   These options takes precedence over properties files.
   -P, --producer-properties=<producerPropertiesFilePath>
-                    A Java Properties file for consumer client configuration (optional)
+                   A Java Properties file for consumer client configuration (optional)
   -p, --producer-property=<String=String>
-                    Specify a producer client configuration property directly.
-                    May be used multiple times.
-                    These options takes precedence over properties files.
+                   Specify a producer client configuration property directly.
+                   May be used multiple times.
+                   These options takes precedence over properties files.
   -t, --transaction[=<transactionalId>]
-                    Produce records within a transaction.
-                    Optional value is the transactional ID to use.
-                    Defaults to a random UUID
-  -n, --no-commit   Do not commit consumer offsets
-  -v, --verbose     Enable verbose logging
+                   Produce records within a transaction.
+                   Optional value is the transactional ID to use.
+                   Defaults to a random UUID
+  -n, --no-commit[=<noCommit>]
+                   Do not commit consumer offsets.
+                   Explicitly set to false to make print commit its offsets
+  -A, --avro-key   Force Avro deserializer for record keys.
+                   Requires schema.registry.url consumer property to be set
+  -a, --avro       Force Avro deserializer for record values.
+                   Requires schema.registry.url consumer property to be set
+  -v, --verbose    Enable verbose logging
 Commands:
   ask        Asks for every record from the source topic whether it should be merged into the destination topic or
                simply purged
   merge-all  Merges all records from the source topic into the specified destination topic and marks them for deletion
                in the source topic
   purge-all  Purges (i.e. writes a tombstone record for) every record from the specified topic
-  print      Prints all records from the specified topic
+  print      Prints all records from the specified topic. Does not commit offsets by default
 ```
 
 Supported shared, consumer and producer properties are those listed in the official documentation for [consumers](https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html)

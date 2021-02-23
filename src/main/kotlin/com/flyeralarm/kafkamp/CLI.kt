@@ -12,7 +12,8 @@ import java.nio.file.Path
     description = ["Merges Kafka records from one topic into another, marking them as deleted in the old topic in the process"],
     synopsisSubcommandLabel = "(ask | merge-all | purge-all | print)",
     usageHelpAutoWidth = true,
-    sortOptions = false
+    sortOptions = false,
+    usageHelpWidth = 120
 )
 class CLI {
     @CommandLine.Option(
@@ -107,11 +108,12 @@ class CLI {
 
     @CommandLine.Option(
         names = ["-n", "--no-commit"],
-        description = ["Do not commit consumer offsets"],
+        description = ["Do not commit consumer offsets.", "Explicitly set to false to make print commit its offsets"],
+        arity = "0..1",
         scope = CommandLine.ScopeType.INHERIT,
         order = 9
     )
-    var noCommit = false
+    var noCommit: Boolean? = null
 
     @CommandLine.Option(
         names = ["-A", "--avro-key"],
@@ -119,7 +121,8 @@ class CLI {
             "Force Avro deserializer for record keys.",
             "Requires schema.registry.url consumer property to be set"
         ],
-        scope = CommandLine.ScopeType.INHERIT
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 10
     )
     var avroKeyDeserializer = false
 
@@ -129,7 +132,8 @@ class CLI {
             "Force Avro deserializer for record values.",
             "Requires schema.registry.url consumer property to be set"
         ],
-        scope = CommandLine.ScopeType.INHERIT
+        scope = CommandLine.ScopeType.INHERIT,
+        order = 11
     )
     var avroValueDeserializer = false
 
@@ -137,45 +141,13 @@ class CLI {
         names = ["-v", "--verbose"],
         description = ["Enable verbose logging"],
         scope = CommandLine.ScopeType.INHERIT,
-        order = 10
+        order = 12
     )
     fun setVerbose(verbose: Boolean) {
         if (verbose) {
             System.setProperty("log4j.root.level", Level.DEBUG.name)
             System.setProperty("log4j.cli.level", Level.DEBUG.name)
         }
-    }
-
-    class DefaultKeyDeserializer {
-        @CommandLine.Option(
-            names = ["-A", "--avro-key"],
-            description = ["Force Avro deserializer for record keys"],
-            scope = CommandLine.ScopeType.INHERIT
-        )
-        var avro = false
-
-        @CommandLine.Option(
-            names = ["-S", "--string-key"],
-            description = ["Force String deserializer for record keys"],
-            scope = CommandLine.ScopeType.INHERIT
-        )
-        var string = false
-    }
-
-    class DefaultValueDeserializer {
-        @CommandLine.Option(
-            names = ["-a", "--avro"],
-            description = ["Force Avro deserializer for record values"],
-            scope = CommandLine.ScopeType.INHERIT
-        )
-        var avro = false
-
-        @CommandLine.Option(
-            names = ["-s", "--string"],
-            description = ["Force String deserializer for record values"],
-            scope = CommandLine.ScopeType.INHERIT
-        )
-        var string = false
     }
 
     companion object : CommandLine.IVersionProvider {

@@ -545,6 +545,26 @@ class FactoryTest {
 
     @Test
     @Suppress("USELESS_IS_CHECK")
+    fun `can create ask command with explicit no commit option`() {
+        mockkStatic(CommandLine::class) {
+            val fallbackFactory = mockk<CommandLine.IFactory>(relaxed = true)
+            every { CommandLine.defaultFactory() } returns fallbackFactory
+
+            val options = CLI()
+            options.consumerGroup = "consumer-group"
+            options.noCommit = true
+
+            val factory = Factory(options, mockk(relaxed = true), mockk(relaxed = true), { mockk() }, { mockk() })
+            assertTrue(factory.create(Ask::class.java) is Ask)
+
+            verify(exactly = 0) {
+                fallbackFactory.create(any())
+            }
+        }
+    }
+
+    @Test
+    @Suppress("USELESS_IS_CHECK")
     fun `can create merge all command without calling fallback factory`() {
         mockkStatic(CommandLine::class) {
             val fallbackFactory = mockk<CommandLine.IFactory>(relaxed = true)
@@ -590,6 +610,26 @@ class FactoryTest {
 
             val options = CLI()
             options.consumerGroup = "consumer-group"
+
+            val factory = Factory(options, mockk(relaxed = true), mockk(relaxed = true), { mockk() }, { mockk() })
+            assertTrue(factory.create(Print::class.java) is Print)
+
+            verify(exactly = 0) {
+                fallbackFactory.create(any())
+            }
+        }
+    }
+
+    @Test
+    @Suppress("USELESS_IS_CHECK")
+    fun `can create print command with explicit no commit option`() {
+        mockkStatic(CommandLine::class) {
+            val fallbackFactory = mockk<CommandLine.IFactory>(relaxed = true)
+            every { CommandLine.defaultFactory() } returns fallbackFactory
+
+            val options = CLI()
+            options.consumerGroup = "consumer-group"
+            options.noCommit = false
 
             val factory = Factory(options, mockk(relaxed = true), mockk(relaxed = true), { mockk() }, { mockk() })
             assertTrue(factory.create(Print::class.java) is Print)

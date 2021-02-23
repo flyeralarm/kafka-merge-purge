@@ -114,18 +114,17 @@ class Factory(
             consumer,
             producer,
             producerProperties.containsKey(ProducerConfig.TRANSACTIONAL_ID_CONFIG),
-            options.noCommit
+            options.noCommit ?: false
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <K : Any?> create(cls: Class<K>): K =
         when (cls) {
-            Ask::class.java ->
-                Ask(logger, pipeline, streamActionSource(System.`in`, logger, promptLogger)) as K
+            Ask::class.java -> Ask(logger, pipeline, streamActionSource(System.`in`, logger, promptLogger)) as K
             MergeAll::class.java -> MergeAll(logger, pipeline) as K
             PurgeAll::class.java -> PurgeAll(logger, pipeline) as K
-            Print::class.java -> Print(logger, consumer, options.noCommit) as K
+            Print::class.java -> Print(logger, consumer, options.noCommit ?: true) as K
             else -> fallbackFactory.create(cls)
         }
 
