@@ -1,7 +1,7 @@
 # kafka-merge-purge
 [![build](https://github.com/flyeralarm/kafka-merge-purge/actions/workflows/build-dev.yml/badge.svg)](https://github.com/flyeralarm/kafka-merge-purge/actions)
 [![Docker Pulls](https://img.shields.io/docker/pulls/flyeralarm/kafka-merge-purge)](https://hub.docker.com/repository/docker/flyeralarm/kafka-merge-purge)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/flyeralarm/kafka-merge-purge/blob/main/LICENSE)
 
 Pipe data between Kafka topics with ease and choose what to do for individual records.
 
@@ -10,7 +10,7 @@ This command line utility allows you to easily merge one Kafka topic into anothe
 for the deletion in the process. Designed for use with dead letter queues, you may choose the action to take for every
 message in the source topic.
 
-![Source topic -> kafka-merge-purge -> Print record -> User input -> Destination Topic](diagram.svg)
+![Source topic -> kafka-merge-purge -> Print record -> User input -> Destination Topic](https://raw.githubusercontent.com/flyeralarm/kafka-merge-purge/main/diagram.svg)
 
 The application uses sane defaults for both producers and consumers, which partially may be overwritten by the user.
 Currently, these defaults include the idempotent mode and `all` acknowledgements for the producer as well as
