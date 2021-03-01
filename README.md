@@ -1,5 +1,5 @@
 # kafka-merge-purge
-[![build](https://github.com/flyeralarm/kafka-merge-purge/workflows/build-dev/badge.svg)](https://github.com/flyeralarm/kafka-merge-purge/actions)
+[![build](https://github.com/flyeralarm/kafka-merge-purge/actions/workflows/build-dev.yml/badge.svg)](https://github.com/domnikl/schema-registry-gitops/actions)
 [![Docker Pulls](https://img.shields.io/docker/pulls/flyeralarm/kafka-merge-purge)](https://hub.docker.com/repository/docker/flyeralarm/kafka-merge-purge)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
