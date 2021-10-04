@@ -96,6 +96,23 @@ schema.registry.url=http://schema-registry.example.com
 Please keep in mind that using a tagged release may be a good idea.
 
 ## Options
+### Authentication
+Depending on your [authentication method](https://docs.confluent.io/platform/current/kafka/overview-authentication-methods.html), you can use the available flags `--consumer-property` & `--producer-property` in order to set your required **options** and configure your dedicated users for message consumption **and/or** production. If you do require a lot of options, we recommend the use of separate properties files instead. 
+
+This is a simple `.properties` file example using the `SASL_SSL` protocol: 
+```properties
+bootstrap.servers=kafka.example.com:9092
+security.protocol=SASL_SSL
+sasl.mechanism=PLAIN
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule \
+  required username='{{ USERNAME }}' password='{{ PASSWORD }}';
+```
+
+Mounting a custom Java Keystore can be done as well, if setting your credentials by parameter does not fit your use case:
+```sh
+docker run --rm -it -v "$(pwd)/my-keystore.jks":/etc/ssl/keystore.jks flyeralarm/kafka-merge-purge ... 
+```
+
 ### Transactions
 kafka-merge-purge supports transactions out of the box. Simply specify the `-t` option to enable the transactional producer.
 You may optionally specify the transactional ID to be used as a parameter to the `-t` option or through a configuration property.
