@@ -24,6 +24,7 @@ plugins {
 repositories {
     jcenter()
     maven { url = uri("https://packages.confluent.io/maven/") }
+    mavenCentral()
 }
 
 dependencies {
@@ -32,8 +33,8 @@ dependencies {
 
     implementation("info.picocli:picocli:4.5.2")
 
-    implementation("org.apache.logging.log4j:log4j-core:2.12.0")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.12.0")
+    implementation("org.apache.logging.log4j:log4j-core:2.17.0")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
 
     implementation("org.apache.avro:avro:1.10.0")
     implementation("io.confluent:kafka-avro-serializer:6.0.1")
