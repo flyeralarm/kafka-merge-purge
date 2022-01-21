@@ -30,7 +30,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 
-    implementation("info.picocli:picocli:4.5.2")
+    implementation("info.picocli:picocli:4.6.2")
 
     implementation("org.apache.logging.log4j:log4j-core:2.12.0")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
