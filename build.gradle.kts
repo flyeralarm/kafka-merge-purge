@@ -14,7 +14,7 @@ version = project.properties["projVersion"] ?: "0.0.0"
 
 plugins {
     application
-    kotlin("jvm") version "1.4.30"
+    kotlin("jvm") version "1.6.10"
     id("com.github.johnrengelman.shadow") version "5.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
     id("org.jetbrains.gradle.plugin.idea-ext") version "0.5"
@@ -33,7 +33,7 @@ dependencies {
     implementation("info.picocli:picocli:4.6.2")
 
     implementation("org.apache.logging.log4j:log4j-core:2.17.1")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
 
     implementation("org.apache.avro:avro:1.11.0")
     implementation("io.confluent:kafka-avro-serializer:6.0.1")
