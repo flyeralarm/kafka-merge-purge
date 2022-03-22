@@ -16,7 +16,7 @@ plugins {
     application
     kotlin("jvm") version "1.4.30"
     id("com.github.johnrengelman.shadow") version "5.2.0"
-    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
+    id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
     id("org.jetbrains.gradle.plugin.idea-ext") version "0.5"
     jacoco
 }
