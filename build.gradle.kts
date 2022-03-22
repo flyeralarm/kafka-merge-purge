@@ -30,7 +30,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 
-    implementation("info.picocli:picocli:4.6.2")
+    implementation("info.picocli:picocli:4.6.3")
 
     implementation("org.apache.logging.log4j:log4j-core:2.17.1")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
@@ -40,7 +40,7 @@ dependencies {
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
-    testImplementation("io.mockk:mockk:1.12.2")
+    testImplementation("io.mockk:mockk:1.12.3")
 }
 
 application {
