@@ -36,7 +36,7 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 
     implementation("org.apache.avro:avro:1.11.0")
-    implementation("io.confluent:kafka-avro-serializer:6.0.1")
+    implementation("io.confluent:kafka-avro-serializer:7.1.0")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
