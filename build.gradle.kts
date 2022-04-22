@@ -14,7 +14,7 @@ version = project.properties["projVersion"] ?: "0.0.0"
 
 plugins {
     application
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.6.21"
     id("com.github.johnrengelman.shadow") version "5.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
     id("org.jetbrains.gradle.plugin.idea-ext") version "0.5"
