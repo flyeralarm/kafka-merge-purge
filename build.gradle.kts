@@ -33,7 +33,7 @@ dependencies {
     implementation("info.picocli:picocli:4.6.3")
 
     implementation("org.apache.logging.log4j:log4j-core:2.18.0")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.18.0")
 
     implementation("org.apache.avro:avro:1.11.0")
     implementation("io.confluent:kafka-avro-serializer:6.0.1")
