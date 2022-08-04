@@ -17,7 +17,7 @@ plugins {
     kotlin("jvm") version "1.6.10"
     id("com.github.johnrengelman.shadow") version "5.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "10.3.0"
-    id("org.jetbrains.gradle.plugin.idea-ext") version "0.5"
+    id("org.jetbrains.gradle.plugin.idea-ext") version "0.10"
     jacoco
 }
 
@@ -36,7 +36,7 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.18.0")
 
     implementation("org.apache.avro:avro:1.11.1")
-    implementation("io.confluent:kafka-avro-serializer:6.0.1")
+    implementation("io.confluent:kafka-avro-serializer:6.2.6")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
